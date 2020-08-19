@@ -5,6 +5,10 @@ Code from https://community.cloudera.com/t5/Support-Questions/Is-there-anyway-to
 # Use It
 
 ```bash
-javac FileStatusChecker.java
-java FileStatusChecker
+./gradlew clean build
+java -jar build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar
+
+#echo `hadoop classpath`
+#javac -cp `hadoop classpath` FileStatusChecker.java
+#java FileStatusChecker
 ```
