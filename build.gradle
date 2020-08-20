@@ -14,9 +14,20 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.apache.hadoop:hadoop-core:1.2.1'
+	//implementation 'org.apache.hadoop:hadoop-common:3.1.4'
+	//implementation 'org.apache.hadoop:hadoop-mapreduce-client-core:3.1.4'
+	//implementation 'org.apache.hadoop:hadoop-mapreduce-client:3.1.4'
+	//implementation 'org.apache.hadoop:hadoop-hdfs-native-client:3.1.4'
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
+}
+
+configurations.all {
+	// Resolves multiple SLF4J bindings issue on MacOS
+	// https://stackoverflow.com/questions/14024756/slf4j-class-path-contains-multiple-slf4j-bindings
+	exclude module: 'slf4j-log4j12'
 }
 
 test {
