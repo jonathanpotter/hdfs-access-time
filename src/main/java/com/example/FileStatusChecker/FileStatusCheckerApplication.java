@@ -23,47 +23,50 @@ import java.util.Date;
 @SpringBootApplication
 public class FileStatusCheckerApplication {
 
-        public void walk( FileSystem fs, String hdfsFilePath ) {
-        //public static String walk( String path ) {
+        public void walk( FileSystem fs, String hdfsFilePath, long limitTimestamp) {
 
             try {
 	        FileStatus[] status = fs.listStatus(new Path(hdfsFilePath));  // you need to pass in your hdfs path
-                //System.out.printf("%-82s%-22s\n","File","Last Accessed");
+                if (status == null) return;
+
 	        for (FileStatus fileStatus : status) {
                     if ( fileStatus.isDirectory() ) {
-                        walk(fs, fileStatus.getPath().toString());
+                        walk(fs, fileStatus.getPath().toString(), limitTimestamp);
 
                     } else {
 	                long lastAccessTimeLong = fileStatus.getAccessTime();
 	                Date lastAccessTimeDate = new Date(lastAccessTimeLong);
 	                DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
-                        System.out.printf("%-82s%-22s\n",fileStatus.getPath().toString(),df.format(lastAccessTimeDate));
+                        if ( limitTimestamp > lastAccessTimeLong ) {
+                            System.out.printf("%-82s\n",fileStatus.getPath().toString());
+                            //System.out.println("└── " + df.format(lastAccessTimeDate));
+                        }
                     }
                 }
             } catch(Exception e) {
                	System.out.println("File not found");
                	e.printStackTrace();
             }
-            //File root = new File( path );
-            //File[] list = root.listFiles();
-
-            //if (list == null) return;
-
-            //for ( File f : list ) {
-            //    if ( f.isDirectory() ) {
-            //        walk( f.getAbsolutePath() );
-            //        System.out.println( "Dir:" + f.getAbsoluteFile() );
-            //    }
-            //    else {
-            //        System.out.println( "File:" + f.getAbsoluteFile() );
-            //    }
-            //}
         }
 
 	public static void main(String[] args) {
 		SpringApplication.run(FileStatusCheckerApplication.class, args);
 
 		try {
+                        // Define which recent files will be ignored in days from current
+                        long limitInDays = 90;
+                        long limitInMillis = limitInDays * 24 * 60 * 60 * 1000;
+
+                        long currentTimestamp = System.currentTimeMillis();
+                        long limitTimestamp = currentTimestamp - limitInMillis;
+                        
+                        System.out.println("Listing files that have not been accessed in last " + limitInDays + " days.");
+                        DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+                        Date currentTimeDate = new Date(currentTimestamp);
+                        Date limitTimeDate = new Date(limitTimestamp);
+                        System.out.println("Current Date: " + df.format(currentTimeDate));
+                        System.out.println("Limit Date: " + df.format(limitTimeDate)); 
+
                         // Create config for Cavium ThunderX.
                         Configuration conf = new Configuration();
                         conf.addResource(new Path("/etc/hadoop/conf/core-site.xml"));
@@ -76,12 +79,10 @@ public class FileStatusCheckerApplication {
 
 			FileSystem fs = FileSystem.get(conf);
 			String hdfsFilePath = "/user/jonpot/";
-
                         FileStatusCheckerApplication fw = new FileStatusCheckerApplication();
-                        fw.walk(fs, hdfsFilePath);
+                        fw.walk(fs, hdfsFilePath, limitTimestamp);
 
 		} catch(Exception e) {
-			System.out.println("File not found");
 			e.printStackTrace();
 		}
 	}
