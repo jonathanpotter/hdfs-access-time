@@ -54,7 +54,7 @@ public class FileStatusCheckerApplication {
 
 		try {
                         // Define which recent files will be ignored in days from current
-                        long limitInDays = 90;
+                        long limitInDays = Long.parseLong(args[0]);
                         long limitInMillis = limitInDays * 24 * 60 * 60 * 1000;
 
                         long currentTimestamp = System.currentTimeMillis();
@@ -78,7 +78,7 @@ public class FileStatusCheckerApplication {
                         UserGroupInformation.loginUserFromSubject(null);
 
 			FileSystem fs = FileSystem.get(conf);
-			String hdfsFilePath = "/user/jonpot/";
+			String hdfsFilePath = args[1];
                         FileStatusCheckerApplication fw = new FileStatusCheckerApplication();
                         fw.walk(fs, hdfsFilePath, limitTimestamp);
 
