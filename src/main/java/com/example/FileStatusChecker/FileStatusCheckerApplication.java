@@ -38,7 +38,7 @@ public class FileStatusCheckerApplication {
 	                Date lastAccessTimeDate = new Date(lastAccessTimeLong);
 	                DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
                         if ( limitTimestamp > lastAccessTimeLong ) {
-                            System.out.printf("%-82s\n",fileStatus.getPath().toString());
+                            System.out.printf("%-82s\n",fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
                             //System.out.println("└── " + df.format(lastAccessTimeDate));
                         }
                     }
