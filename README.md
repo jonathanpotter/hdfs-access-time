@@ -1,13 +1,12 @@
 Checks the last access time of files in HDFS.
 
-Code from https://community.cloudera.com/t5/Support-Questions/Is-there-anyway-to-get-last-access-time-of-hdfs-files/td-p/153375
+Given N number of days and a path, the program will recursively check all files in the path and list out those that have not been accessed in the last N days. The output is a list of files separated by newline character. You can prepend the FUSE mount and replace newlines with null characters and process with `du` to calculate the total usage in each users HDFS home directory.
 
-Given N number of days and a path, the program will recursively check all files in the path and list out those that have not been accessed in the last N days. The output is a list of files separated by the null character (for easy processing by du). The full path to the file is printed prefixed by `/hadoop-fuse`.
-
-# Usage
+## Usage
 
 ```bash
-java -jar FileStatusChecker*.jar PATH -atime DAYS
+SYNOPSIS
+      java -jar FileStatusChecker*.jar [path...] [-atime DAYS]
 
 # Clone repo to hadoop login node and build jar.
 ./gradlew clean build
@@ -33,8 +32,7 @@ done
 
 # Sort the output by size.
 awk 'BEGIN { FS = "," } ; { print $2,$1 }' ${OUTPUT_FILE} | sort -hr
-
-#echo `hadoop classpath`
-#javac -cp `hadoop classpath` FileStatusChecker.java
-#java FileStatusChecker
 ```
+## Reference
+
+- https://community.cloudera.com/t5/Support-Questions/Is-there-anyway-to-get-last-access-time-of-hdfs-files/td-p/153375
