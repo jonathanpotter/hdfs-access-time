@@ -13,10 +13,10 @@ java -jar FileStatusChecker*.jar PATH -atime DAYS
 ./gradlew clean build
 
 # Run it against your own directory.
-java -jar build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/jonpot -atime 90 | tr '\0' '\n'
+java -jar build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/jonpot -atime 90
 
-# Or send output to du to calculate usage.
-java -jar build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/jonpot -atime 90 | du -s -h -c --files0-from=- | grep total | tail -n1
+# Or send output to du to calculate usage through FUSE mount.
+java -jar build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/jonpot -atime 90 | sed -e 's/^/\/hadoop-fuse/' | tr '\n' '\0' | du -s -h -c --files0-from=-
 
 # Or run it as user hdfs on hadoop login node to calculate all user directories.
 cp ~/workspace/hdfs-access-time/build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar /tmp/
@@ -27,7 +27,9 @@ OUTPUT_FILE=last-access-audit-$(date "+%Y%m%d").txt
 for dir in ${USER_HOME_DIR}; do
     user="$(basename ${dir})"
     echo -n "${user}," >> ${OUTPUT_FILE}
-    sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 180' | du -s -h -c --files0-from=- | tail -n 1 | cut -f 1 >> ${OUTPUT_FILE}
+    sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 180' | \
+        sed -e 's/^/\/hadoop-fuse/' | tr '\n' '\0' | du -s -h -c --files0-from=- | tail -n 1 | cut -f 1 >> ${OUTPUT_FILE}
+    #sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 180 -print0' | du -s -h -c --files0-from=- | tail -n 1 | cut -f 1 >> ${OUTPUT_FILE}
 done
 
 # Sort the output by size.

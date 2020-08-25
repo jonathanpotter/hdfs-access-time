@@ -23,41 +23,43 @@ import java.util.Date;
 @SpringBootApplication
 public class FileStatusCheckerApplication {
 
-        public void walk( FileSystem fs, String hdfsFilePath, long limitTimestamp) {
+        public void walk( FileSystem fs, String hdfsFilePath, long limitTimestamp, boolean printNull) {
 
             try {
-	        FileStatus[] status = fs.listStatus(new Path(hdfsFilePath));  // you need to pass in your hdfs path
+                FileStatus[] status = fs.listStatus(new Path(hdfsFilePath));  // you need to pass in your hdfs path
                 if (status == null) return;
 
-	        for (FileStatus fileStatus : status) {
+                for (FileStatus fileStatus : status) {
                     if ( fileStatus.isDirectory() ) {
-                        walk(fs, fileStatus.getPath().toString(), limitTimestamp);
+                        walk(fs, fileStatus.getPath().toString(), limitTimestamp, printNull);
 
                     } else {
-	                long lastAccessTimeLong = fileStatus.getAccessTime();
-	                Date lastAccessTimeDate = new Date(lastAccessTimeLong);
-	                DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+                        long lastAccessTimeLong = fileStatus.getAccessTime();
+                        Date lastAccessTimeDate = new Date(lastAccessTimeLong);
+                        DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
                         if ( limitTimestamp > lastAccessTimeLong ) {
-                            //System.out.printf("%-82s\n",fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
-                            System.out.printf("/hadoop-fuse%s\u0000",fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
-                            //System.out.printf("\u0000");
-                            //char c='\u0000';
+                            if (printNull) {
+                                System.out.printf("/hadoop-fuse%s\u0000",fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
+                            } else {
+                                System.out.printf("%s\n",fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
+                            }
                             //System.out.println("└── " + df.format(lastAccessTimeDate));
                         }
                     }
                 }
             } catch(Exception e) {
-               	System.out.println("File not found");
-               	e.printStackTrace();
+                System.out.println("File not found");
+                e.printStackTrace();
             }
         }
 
-	public static void main(String[] args) {
-		SpringApplication.run(FileStatusCheckerApplication.class, args);
+    public static void main(String[] args) {
+        SpringApplication.run(FileStatusCheckerApplication.class, args);
 
-		try {
+            try {
                         // Set defaults
                         long limitInDays = 90;
+                        boolean printNull = false;
 
                         // Evaluate arguments
                         for (int i = 0; i < args.length; i++) {
@@ -70,36 +72,9 @@ public class FileStatusCheckerApplication {
                                     System.exit(1);
                                 }
                             }
-
-                            //switch (month) {
-                            //    case 1:  monthString = "January";
-                            //             break;
-                            //    case 2:  monthString = "February";
-                            //             break;
-                            //    case 3:  monthString = "March";
-                            //             break;
-                            //    case 4:  monthString = "April";
-                            //             break;
-                            //    case 5:  monthString = "May";
-                            //             break;
-                            //    case 6:  monthString = "June";
-                            //             break;
-                            //    case 7:  monthString = "July";
-                            //             break;
-                            //    case 8:  monthString = "August";
-                            //             break;
-                            //    case 9:  monthString = "September";
-                            //             break;
-                            //    case 10: monthString = "October";
-                            //             break;
-                            //    case 11: monthString = "November";
-                            //             break;
-                            //    case 12: monthString = "December";
-                            //             break;
-                            //    default: monthString = "Invalid month";
-                            //             break;
-                            //}
-
+                            if (args[i].equals("-print0")) {
+                                printNull = true;
+                            }
                         }
 
                         // Define which recent files will be ignored in days from current
@@ -125,13 +100,13 @@ public class FileStatusCheckerApplication {
                         UserGroupInformation.setConfiguration(conf);
                         UserGroupInformation.loginUserFromSubject(null);
 
-			FileSystem fs = FileSystem.get(conf);
-			String hdfsFilePath = args[0];
+            FileSystem fs = FileSystem.get(conf);
+            String hdfsFilePath = args[0];
                         FileStatusCheckerApplication fw = new FileStatusCheckerApplication();
-                        fw.walk(fs, hdfsFilePath, limitTimestamp);
+                        fw.walk(fs, hdfsFilePath, limitTimestamp, printNull);
 
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
