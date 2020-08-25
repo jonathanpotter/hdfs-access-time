@@ -29,7 +29,6 @@ for dir in ${USER_HOME_DIR}; do
     echo -n "${user}," >> ${OUTPUT_FILE}
     sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 180' | \
         sed -e 's/^/\/hadoop-fuse/' | tr '\n' '\0' | du -s -h -c --files0-from=- | tail -n 1 | cut -f 1 >> ${OUTPUT_FILE}
-    #sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 180 -print0' | du -s -h -c --files0-from=- | tail -n 1 | cut -f 1 >> ${OUTPUT_FILE}
 done
 
 # Sort the output by size.
