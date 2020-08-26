@@ -6,7 +6,14 @@ Given N number of days and a path, the program will recursively check all files 
 
 ```bash
 SYNOPSIS
-      java -jar FileStatusChecker*.jar [path...] [-atime DAYS]
+      java -jar FileStatusChecker*.jar [<PATH>] [-atime <NUMBER_OF_DAYS>] [-u]
+
+Generic options supported are
+<PATH>                              Recursively print all files in this path.
+-atime <NUMBER_OF_DAYS>             Print only files that were last accessed more than N number days ago.
+-u                                  Print last access time in epoch format.
+
+---
 
 # Clone repo to hadoop login node and build jar.
 ./gradlew clean build

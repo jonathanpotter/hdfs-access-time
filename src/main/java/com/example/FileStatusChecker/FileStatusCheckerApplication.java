@@ -17,7 +17,7 @@ import java.util.Date;
 @SpringBootApplication
 public class FileStatusCheckerApplication {
 
-  public void walk(FileSystem fs, String hdfsFilePath, long limitTimestamp, boolean printNull) {
+  public void walk(FileSystem fs, String hdfsFilePath, long limitTimestamp, boolean printNull, boolean printAccessTime) {
 
     try {
       FileStatus[] status = fs.listStatus(new Path(hdfsFilePath));
@@ -25,7 +25,7 @@ public class FileStatusCheckerApplication {
 
       for (FileStatus fileStatus: status) {
         if (fileStatus.isDirectory()) {
-          walk(fs, fileStatus.getPath().toString(), limitTimestamp, printNull);
+          walk(fs, fileStatus.getPath().toString(), limitTimestamp, printNull, printAccessTime);
 
         } else {
           long lastAccessTimeLong = fileStatus.getAccessTime();
@@ -35,7 +35,12 @@ public class FileStatusCheckerApplication {
             if (printNull) {
               System.out.printf("/hadoop-fuse%s\u0000", fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
             } else {
-              System.out.printf("%s\n", fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
+              if (printAccessTime) {
+                //System.out.printf("%s,%s\n", fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString(), df.format(lastAccessTimeDate));
+                System.out.printf("%s,%s\n", fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString(), lastAccessTimeLong);
+              } else {
+                System.out.printf("%s\n", fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
+              }
             }
             //System.out.println("└── " + df.format(lastAccessTimeDate));
           }
@@ -52,8 +57,9 @@ public class FileStatusCheckerApplication {
 
     try {
       // Set defaults
-      long limitInDays = 90;
+      long limitInDays = 0;
       boolean printNull = false;
+      boolean printAccessTime = false;
 
       // Evaluate arguments
       for (int i = 0; i < args.length; i++) {
@@ -68,6 +74,9 @@ public class FileStatusCheckerApplication {
         }
         if (args[i].equals("-print0")) {
           printNull = true;
+        }
+        if (args[i].equals("-u")) {
+          printAccessTime = true;
         }
       }
 
@@ -96,7 +105,7 @@ public class FileStatusCheckerApplication {
       FileSystem fs = FileSystem.get(conf);
       String hdfsFilePath = args[0];
       FileStatusCheckerApplication fw = new FileStatusCheckerApplication();
-      fw.walk(fs, hdfsFilePath, limitTimestamp, printNull);
+      fw.walk(fs, hdfsFilePath, limitTimestamp, printNull, printAccessTime);
 
     } catch(Exception e) {
       e.printStackTrace();
