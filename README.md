@@ -49,10 +49,10 @@ OUTPUT_FILE=last-access-histogram-$(date "+%Y%m%d").txt
 > ${OUTPUT_FILE}
 for dir in ${USER_HOME_DIR}; do
     user="$(basename ${dir})"
-    echo -n "---\n${user}" >> ${OUTPUT_FILE}
+    echo -e "--- ${user}\n" >> ${OUTPUT_FILE}
     sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 0 -u' | \
         /tmp/print-histogram.sh >> ${OUTPUT_FILE}
-    echo -n "---\n" >> ${OUTPUT_FILE}
+    echo -e "---\n" >> ${OUTPUT_FILE}
 done
 ```
 ## Reference

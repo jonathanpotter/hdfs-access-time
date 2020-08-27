@@ -8,6 +8,7 @@ read_input() {
     minAccessTime=${currentTime}
     maxAccessTime=1
     maxDaysAllowed=1460
+    fileCount=0
     groupSize=30
     groupCount=$((${maxDaysAllowed} / ${groupSize}))
     # Initialize histogram array.
@@ -37,6 +38,7 @@ read_input() {
         fi
         groupId=$((${ageDays} / ${groupSize}))
         ((groupValue[${groupId}]+=1))
+        ((fileCount+=1))
     done < "${1:-/dev/stdin}"
 
 }
@@ -51,17 +53,20 @@ print_results() {
     echo "   =============="
     echo "   Atime results:"
     echo "   =============="
-    #echo "   Average atime age in days:  127.981  days"
-    echo "   Oldest atime age file in days:  ${oldestAccessTimeDay}  days"
-    echo "   Youngest atime age file in days:  ${youngestAccessTimeDay}  days"
-    #echo "   Standard deviation atime age in days:  98.5828  days"
-    echo ""
-    lastGroup=$(((${oldestAccessTimeDay} / ${groupSize}) + 1))
-    for ((i=0;i<${lastGroup};i++)); do
-        groupStartAge=$(($i * ${groupSize}))
-        groupEndAge=$((($i * ${groupSize}) + ${groupSize}))
-        printf "  [ %4s  - %4s days ]:    %6s\n" ${groupStartAge} ${groupEndAge} ${groupValue[$i]}
-    done
+    echo "   Total files:  ${fileCount}"
+    if [ ${fileCount} -gt 0 ]; then
+        #echo "   Average atime age in days:  127.981  days"
+        echo "   Oldest atime age file in days:  ${oldestAccessTimeDay}  days"
+        echo "   Youngest atime age file in days:  ${youngestAccessTimeDay}  days"
+        #echo "   Standard deviation atime age in days:  98.5828  days"
+        echo ""
+        lastGroup=$(((${oldestAccessTimeDay} / ${groupSize}) + 1))
+        for ((i=0;i<${lastGroup};i++)); do
+            groupStartAge=$(($i * ${groupSize}))
+            groupEndAge=$((($i * ${groupSize}) + ${groupSize}))
+            printf "  [ %4s  - %4s days ]:    %6s\n" ${groupStartAge} ${groupEndAge} ${groupValue[$i]}
+        done
+    fi
     echo ""
     # See https://www.admin-magazine.com/HPC/Articles/Understanding-the-Status-of-Your-Filesystem
 }
