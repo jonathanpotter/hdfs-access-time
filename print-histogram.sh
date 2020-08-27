@@ -9,6 +9,7 @@ read_input() {
     maxAccessTime=1
     maxDaysAllowed=1460             # Upper limit of oldest access time in days.
     fileCountSum=0                  # Running total count of all files.
+    fileSizeSum=0                   # Running total sum of all file sizes.
     groupSize=30                    # Number of days in each histogram group. 
     groupCount=$((${maxDaysAllowed} / ${groupSize}))    # Number of histogram groups.
     for ((i=0;i<${groupCount};i++)); do
@@ -40,6 +41,7 @@ read_input() {
         ((groupFileCount[${groupId}]+=1))
         ((groupFileSize[${groupId}]+=${fileSize}))
         ((fileCountSum+=1))
+        ((fileSizeSum+=${fileSize}))
     done < "${1:-/dev/stdin}"
 }
 
@@ -50,10 +52,7 @@ print_results() {
     oldestAccessTimeDay=$((${oldestAccessTime} / ${millisPerDay}))
     youngestAccessTimeDay=$((${youngestAccessTime} / ${millisPerDay}))
 
-    echo "   =============="
-    echo "   Atime results:"
-    echo "   =============="
-    echo "   Total files:  ${fileCountSum}"
+    echo ""
     if [ ${fileCountSum} -gt 0 ]; then
         #echo "   Average atime age in days:  127.981  days"
         echo "   Oldest atime age file in days:  ${oldestAccessTimeDay}  days"
@@ -68,6 +67,8 @@ print_results() {
             groupFileSizeGB=$(echo "scale=1; ${groupFileSize[$i]} / 1024 / 1024 / 1024" | bc)
             printf "  [ %4s  - %4s days ]         %6s         %8s\n" ${groupStartAge} ${groupEndAge} ${groupFileCount[$i]} ${groupFileSizeGB}
         done
+        fileSizeSumGB=$(echo "scale=1; ${fileSizeSum} / 1024 / 1024 / 1024" | bc)
+        printf "      TOTAL       %20s         %8s\n" ${fileCountSum} ${fileSizeSumGB}
     fi
     echo ""
     # See https://www.admin-magazine.com/HPC/Articles/Understanding-the-Status-of-Your-Filesystem
