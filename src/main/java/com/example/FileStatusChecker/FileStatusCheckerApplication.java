@@ -96,7 +96,7 @@ public class FileStatusCheckerApplication {
       Configuration conf = new Configuration();
       conf.addResource(new Path("/etc/hadoop/conf/core-site.xml"));
       conf.addResource(new Path("/etc/hadoop/conf/hdfs-site.xml"));
-      conf.set("fs.default.name", "hdfs://cavium-nn02");
+      conf.set("fs.default.name", "hdfs://cavium-nn01");
 
       // Subject is taken from current user context
       UserGroupInformation.setConfiguration(conf);
