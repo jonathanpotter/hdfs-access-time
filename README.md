@@ -16,6 +16,7 @@ Generic options supported are
 <PATH>                              Recursively print all files in this path.
 -atime <NUMBER_OF_DAYS>             Print only files that were last accessed more than N number days ago.
 -print-atime                        Print last access time in epoch format.
+-print-size                         Print file size in bytes.
 
 ---
 

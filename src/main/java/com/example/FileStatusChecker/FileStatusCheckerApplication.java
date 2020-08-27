@@ -49,7 +49,7 @@ public class FileStatusCheckerApplication {
             }
             // Add file size.
             if (printFileSize) {
-              sb.append(",").append("TODO");
+              sb.append(",").append(fileStatus.getLen());
             }
             // Add line terminator.
             if (printNull) {
