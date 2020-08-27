@@ -16,11 +16,10 @@ read_input() {
         groupFileSize[$i]=0         # Running total sum of file sizes in group.
     done
 
+
     # Each line is a file. First field is file path. Second field is atime. 
-    while read line
+    while IFS="," read -r ignorePath accessTime fileSize
     do
-        accessTime=$(echo "$line" | cut -d "," -f 2)
-        fileSize=$(echo "$line" | cut -d "," -f 3)
 
         # If atime is larger or smaller than any previous, set new min or max.
         if [ "$accessTime" -lt "$minAccessTime" ]; then
