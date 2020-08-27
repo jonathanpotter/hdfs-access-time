@@ -75,7 +75,7 @@ public class FileStatusCheckerApplication {
         if (args[i].equals("-print0")) {
           printNull = true;
         }
-        if (args[i].equals("-u")) {
+        if (args[i].equals("-print-atime")) {
           printAccessTime = true;
         }
       }

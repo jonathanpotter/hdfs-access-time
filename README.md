@@ -1,17 +1,21 @@
-Checks the last access time of files in HDFS.
+A utility tool that functions similarly to find with HDFS awareness. Originally created to gather statistics around last access time of files in HDFS. The utility included with Hadoop, `hdfs dfs -find`, does not support atime queries.
 
-Given N number of days and a path, the program will recursively check all files in the path and list out those that have not been accessed in the last N days. The output is a list of files separated by newline character. You can prepend the FUSE mount and replace newlines with null characters and process with `du` to calculate the total usage in each users HDFS home directory.
+The program will recursively check all files in the path and print their full path on a new line on stdout. Given  the argument `-atime` and N number of days, the list will be filtered to only output those files that have not been accessed in the last N days. 
+
+You can prepend the FUSE mount and replace newlines with null characters and process with `du` to calculate the total usage in each users HDFS home directory. Optionally, the argument `-print0` will cause the output to be separated by null character instead of the newline character and prepend each line with `/hadoop-fuse`.
+
+The argument `-print-atime` will include the last access time in the output. The argument `-print-size` will include the file size in the output.
 
 ## Usage
 
 ```bash
 SYNOPSIS
-      java -jar FileStatusChecker*.jar [<PATH>] [-atime <NUMBER_OF_DAYS>] [-u]
+      java -jar FileStatusChecker*.jar [<PATH>] [-atime <NUMBER_OF_DAYS>] [-print-atime]
 
 Generic options supported are
 <PATH>                              Recursively print all files in this path.
 -atime <NUMBER_OF_DAYS>             Print only files that were last accessed more than N number days ago.
--u                                  Print last access time in epoch format.
+-print-atime                        Print last access time in epoch format.
 
 ---
 
@@ -50,7 +54,7 @@ OUTPUT_FILE=last-access-histogram-$(date "+%Y%m%d").txt
 for dir in ${USER_HOME_DIR}; do
     user="$(basename ${dir})"
     echo -e "--- ${user}\n" >> ${OUTPUT_FILE}
-    sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 0 -u' | \
+    sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 0 -print-atime' | \
         /tmp/print-histogram.sh >> ${OUTPUT_FILE}
     echo -e "---\n" >> ${OUTPUT_FILE}
 done
