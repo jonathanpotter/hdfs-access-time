@@ -17,7 +17,9 @@ import java.util.Date;
 @SpringBootApplication
 public class FileStatusCheckerApplication {
 
-  public void walk(FileSystem fs, String hdfsFilePath, long limitTimestamp, boolean printNull, boolean printAccessTime) {
+  public void walk(FileSystem fs, String hdfsFilePath, long limitTimestamp,
+      boolean printFuse, boolean printNull, boolean printAccessTime,
+      boolean printFileSize) {
 
     try {
       FileStatus[] status = fs.listStatus(new Path(hdfsFilePath));
@@ -25,24 +27,37 @@ public class FileStatusCheckerApplication {
 
       for (FileStatus fileStatus: status) {
         if (fileStatus.isDirectory()) {
-          walk(fs, fileStatus.getPath().toString(), limitTimestamp, printNull, printAccessTime);
-
+          walk(fs, fileStatus.getPath().toString(), limitTimestamp, printFuse,
+              printNull, printAccessTime, printFileSize);
         } else {
           long lastAccessTimeLong = fileStatus.getAccessTime();
           Date lastAccessTimeDate = new Date(lastAccessTimeLong);
-          DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+          StringBuilder sb = new StringBuilder();
           if (limitTimestamp > lastAccessTimeLong) {
-            if (printNull) {
-              System.out.printf("/hadoop-fuse%s\u0000", fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
-            } else {
-              if (printAccessTime) {
-                //System.out.printf("%s,%s\n", fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString(), df.format(lastAccessTimeDate));
-                System.out.printf("%s,%s\n", fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString(), lastAccessTimeLong);
-              } else {
-                System.out.printf("%s\n", fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
-              }
+            // Add hadoop fuse mount prefix.
+            if (printFuse) {
+              sb.append("/hadoop-fuse");
             }
-            //System.out.println("└── " + df.format(lastAccessTimeDate));
+            // Add path and filename.
+            sb.append(fileStatus.getPath().getPathWithoutSchemeAndAuthority(fileStatus.getPath()).toString());
+            // Add last access time.
+            if (printAccessTime) {
+              sb.append(",").append(lastAccessTimeLong);
+              // Or human readable timestamp.
+              //DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+              //sb.append(",").append(df.format(lastAccessTimeDate));
+            }
+            // Add file size.
+            if (printFileSize) {
+              sb.append(",").append("TODO");
+            }
+            // Add line terminator.
+            if (printNull) {
+                sb.append("\u0000");
+            } else {
+                sb.append("\n");
+            }
+            System.out.printf("%s", sb.toString());
           }
         }
       }
@@ -58,8 +73,10 @@ public class FileStatusCheckerApplication {
     try {
       // Set defaults
       long limitInDays = 0;
+      boolean printFuse = false;
       boolean printNull = false;
       boolean printAccessTime = false;
+      boolean printFileSize = false;
 
       // Evaluate arguments
       for (int i = 0; i < args.length; i++) {
@@ -78,6 +95,9 @@ public class FileStatusCheckerApplication {
         if (args[i].equals("-print-atime")) {
           printAccessTime = true;
         }
+        if (args[i].equals("-print-size")) {
+          printFileSize = true;
+        }
       }
 
       // Define which recent files will be ignored in days from current
@@ -86,12 +106,14 @@ public class FileStatusCheckerApplication {
       long currentTimestamp = System.currentTimeMillis();
       long limitTimestamp = currentTimestamp - limitInMillis;
 
-      DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
       Date currentTimeDate = new Date(currentTimestamp);
       Date limitTimeDate = new Date(limitTimestamp);
-      //System.out.println("Listing files that have not been accessed in last " + limitInDays + " days.");
+      //DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+      //System.out.println("Listing files that have not been accessed in last "
+      //    + limitInDays + " days.");
       //System.out.println("Current Date: " + df.format(currentTimeDate));
       //System.out.println("Limit Date: " + df.format(limitTimeDate));
+
       // Create config for Cavium ThunderX.
       Configuration conf = new Configuration();
       conf.addResource(new Path("/etc/hadoop/conf/core-site.xml"));
@@ -105,7 +127,8 @@ public class FileStatusCheckerApplication {
       FileSystem fs = FileSystem.get(conf);
       String hdfsFilePath = args[0];
       FileStatusCheckerApplication fw = new FileStatusCheckerApplication();
-      fw.walk(fs, hdfsFilePath, limitTimestamp, printNull, printAccessTime);
+      fw.walk(fs, hdfsFilePath, limitTimestamp, printFuse, printNull, printAccessTime,
+          printFileSize);
 
     } catch(Exception e) {
       e.printStackTrace();
