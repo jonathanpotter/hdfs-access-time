@@ -65,6 +65,14 @@ for dir in ${USER_HOME_DIR}; do
     sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 0 -print-atime -print-size' | \
         /tmp/print-histogram.sh >> ${OUTPUT_FILE}
 done
+
+# Or generate a histogram of the entire /user/ directory showing count of files and
+# disk space consumed by each bin of last access time. This takes over 3 hours.
+# This can also be applied to large, shared datasets such as /data/twitter/decahose/
+OUTPUT_FILE=last-access-histogram-$(date "+%Y%m%d").txt
+> ${OUTPUT_FILE}
+sudo -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/ -atime 0 -print-atime -print-size' | \
+    /tmp/print-histogram.sh >> ${OUTPUT_FILE}
 ```
 ## Reference
 
