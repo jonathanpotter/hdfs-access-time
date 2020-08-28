@@ -23,39 +23,45 @@ Generic options supported are
 # Clone repo to hadoop login node and build jar.
 ./gradlew clean build
 
-# Run it against your own directory.
+# Run it against your own directory to find all files that have not been accessed
+# in over N days (90 in example below).
 java -jar build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/jonpot -atime 90
 
-# Or send output to du to calculate usage through FUSE mount.
-java -jar build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/jonpot -atime 90 | sed -e 's/^/\/hadoop-fuse/' | tr '\n' '\0' | du -s -h -c --files0-from=-
+# Or send output to du to calculate how much disk space those files are consuming.
+java -jar build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/jonpot -atime 90 | \
+    sed -e 's/^/\/hadoop-fuse/' | tr '\n' '\0' | du -s -h -c --files0-from=-
 
-# Or run it as user hdfs on hadoop login node to calculate all user directories.
+# Or to calculate system-wide, first copy files to /tmp/ as regular user.
 cp ~/workspace/hdfs-access-time/build/libs/FileStatusChecker-0.0.1-SNAPSHOT.jar /tmp/
-# switch to root.
+cp ~/workspace/hdfs-access-time/print-histogram.sh /tmp/
+
+# Switch to root and run it as user hdfs on hadoop login node to calculate
+# how much space in each user directory is being consumed by files that have
+# not been access in over N days (180 in example below).
 USER_HOME_DIR=/hadoop-fuse/user/*
 OUTPUT_FILE=last-access-audit-$(date "+%Y%m%d").txt
 > ${OUTPUT_FILE}
 for dir in ${USER_HOME_DIR}; do
     user="$(basename ${dir})"
     echo -n "${user}," >> ${OUTPUT_FILE}
-    sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 180' | \
-        sed -e 's/^/\/hadoop-fuse/' | tr '\n' '\0' | du -s -h -c --files0-from=- | tail -n 1 | cut -f 1 >> ${OUTPUT_FILE}
+    sudo user=${user} -u hdfs bash -c \
+        'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 180' | \
+        sed -e 's/^/\/hadoop-fuse/' | tr '\n' '\0' | du -s -h -c --files0-from=- | \
+        tail -n 1 | cut -f 1 >> ${OUTPUT_FILE}
 done
-
-# Sort the output by size.
+# Sort the output by size to see which user directories are consuming the most space
+# with files older than N days.
 awk 'BEGIN { FS = "," } ; { print $2,$1 }' ${OUTPUT_FILE} | sort -hr
 
-# Generate a histogram.
-# switch to regular user.
-cp ~/workspace/hdfs-access-time/print-histogram.sh /tmp/
-# switch to root.
+# Or generate a histogram of each user directory using last access time to create bins
+# and show the count of files and the disk space consumed for each bin.
 USER_HOME_DIR=/hadoop-fuse/user/*
 OUTPUT_FILE=last-access-histogram-$(date "+%Y%m%d").txt
 > ${OUTPUT_FILE}
 for dir in ${USER_HOME_DIR}; do
     user="$(basename ${dir})"
     echo -e "------\n" >> ${OUTPUT_FILE}
-    echo -e "${user}\n" >> ${OUTPUT_FILE}
+    echo -e "${user}" >> ${OUTPUT_FILE}
     sudo user=${user} -u hdfs bash -c 'java -jar /tmp/FileStatusChecker-0.0.1-SNAPSHOT.jar /user/${user} -atime 0 -print-atime -print-size' | \
         /tmp/print-histogram.sh >> ${OUTPUT_FILE}
 done
