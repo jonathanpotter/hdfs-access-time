@@ -7,7 +7,8 @@ read_input() {
     millisPerDay=$((1000 * 60 * 60 * 24))
     minAccessTime=${currentTime}
     maxAccessTime=1
-    maxDaysAllowed=1460             # Upper limit of oldest access time in days.
+    #maxDaysAllowed=1460             # Upper limit of oldest access time in days.
+    maxDaysAllowed=1825             # Upper limit of oldest access time in days.
     fileCountSum=0                  # Running total count of all files.
     fileSizeSum=0                   # Running total sum of all file sizes.
     groupSize=30                    # Number of days in each histogram group. 
